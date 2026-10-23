@@ -535,6 +535,11 @@ void MambaForCausalLM::reset_cache(
     size_t max_batch_size = 1;
     if (auto static_config = dynamic_cast<const cache::StaticKVCacheConfig *>(cache_config)) {
         max_batch_size = static_config->max_batch_size();
+        if (max_batch_size == std::numeric_limits<size_t>::max()) {
+            throw std::length_error("Mamba static state pool size overflow");
+        }
+        // Append a zero-state row without changing default forward row numbers.
+        ++max_batch_size;
     } else if (auto paged_config = dynamic_cast<const cache::PagedKVCacheConfig *>(cache_config)) {
         max_batch_size = paged_config->num_blocks();
     }
